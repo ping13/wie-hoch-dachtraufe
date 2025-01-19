@@ -135,6 +135,7 @@ def download_tile(url, folder):
             print(f"unzipping {file_name} and converting to a Shapefile")
             zip_ref.extractall(folder)
 
+            # convert the command line below to Python code. AI!
             # Convert DXF to Shapefile
             command = [
                 "ogr2ogr",
