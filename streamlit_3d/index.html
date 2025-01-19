@@ -1,0 +1,72 @@
+<html>
+  <body>
+    <!-- Three js javascript files -->
+    <script src="js/o3dv.min.js"></script>
+    <!-- Set up your HTML here -->
+    <div id="online_3d_viewer" class="online_3d_viewer"
+         style="width: 800px; height: 600px;">
+    </div>
+
+    <script>
+      // ----------------------------------------------------
+      // Just copy/paste these functions as-is:
+
+      function sendMessageToStreamlitClient(type, data) {
+        var outData = Object.assign(
+          {
+            isStreamlitMessage: true,
+            type: type,
+          },
+          data
+        );
+        window.parent.postMessage(outData, "*");
+      }
+
+      function init() {
+          sendMessageToStreamlitClient("streamlit:componentReady", {
+              apiVersion: 1,
+          });
+      }
+
+      function setFrameHeight(height) {
+        sendMessageToStreamlitClient("streamlit:setFrameHeight", {
+          height: height,
+        });
+      }
+
+      // The `data` argument can be any JSON-serializable value.
+      function sendDataToPython(data) {
+        sendMessageToStreamlitClient("streamlit:setComponentValue", data);
+      }
+
+      // data is any JSON-serializable value you sent from Python,
+      // and it's already deserialized for you.
+      function onDataFromPython(event) {
+          if (event.data.type !== "streamlit:render") return;
+
+          console.log(event);
+          let height = event.data.args.height;
+          let file_path = event.data.args.file_path;
+
+          if (height !== undefined) setFrameHeight(height);
+          
+          
+          // Clear any previous content in #3d_frame and append the new 3d-viewer
+          let Frame3D = document.getElementById('online_3d_viewer');
+          Frame3D.setAttribute('model', file_path);
+          OV.Init3DViewerElements();                   
+      }
+
+      // Hook things up!
+      window.addEventListener("message", onDataFromPython);
+      init();
+
+      // Hack to autoset the iframe height.
+      window.addEventListener("load", function () {
+          window.setTimeout(function () {
+              setFrameHeight(document.documentElement.clientHeight);
+          }, 0);
+      });
+    </script>
+  </body>
+</html>
