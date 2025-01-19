@@ -11,8 +11,8 @@ import fiona
 import logging
 import pyvista as pv
 import json
-from osgeo import ogr
 import tempfile
+import subprocess
 
 import streamlit as st
 
@@ -22,72 +22,6 @@ logger = logging.getLogger(__name__)
 
 # Constants
 DOWNLOADS_DIR = "downloads/"
-
-def convert_dxf_to_zipped_shapefile(input_dxf_path: str, output_zip_path: str) -> None:
-    """
-    Convert a DXF file to a zipped Shapefile.
-    
-    Args:
-        input_dxf_path: Path to input DXF file
-        output_zip_path: Path where the zipped shapefile should be saved
-    
-    Raises:
-        Exception: If conversion fails
-    """
-    with tempfile.TemporaryDirectory() as temp_dir:
-        # Open DXF file
-        in_ds = ogr.Open(input_dxf_path)
-        if in_ds is None:
-            raise Exception(f"Could not open DXF file {input_dxf_path}")
-
-        # Create Shapefile driver
-        driver = ogr.GetDriverByName("ESRI Shapefile")
-        if driver is None:
-            raise Exception("Shapefile driver not available")
-
-        # Create temporary shapefile path (without .zip extension)
-        temp_shp = os.path.join(temp_dir, "output.shp")
-
-        # Create output shapefile
-        out_ds = driver.CreateDataSource(temp_shp)
-        if out_ds is None:
-            raise Exception(f"Could not create output shapefile {temp_shp}")
-
-        # Copy all layers
-        for i in range(in_ds.GetLayerCount()):
-            in_layer = in_ds.GetLayer(i)
-            out_layer = out_ds.CreateLayer(
-                in_layer.GetName(),
-                in_layer.GetSpatialRef(),
-                in_layer.GetGeomType()
-            )
-            
-            # Copy layer definition
-            in_layer_defn = in_layer.GetLayerDefn()
-            for i in range(in_layer_defn.GetFieldCount()):
-                out_layer.CreateField(in_layer_defn.GetFieldDefn(i))
-            
-            # Copy features
-            for in_feature in in_layer:
-                out_feature = ogr.Feature(out_layer.GetLayerDefn())
-                out_feature.SetGeometry(in_feature.GetGeometryRef())
-                for i in range(in_feature.GetFieldCount()):
-                    out_feature.SetField(i, in_feature.GetField(i))
-                out_layer.CreateFeature(out_feature)
-                out_feature = None
-
-        # Clean up
-        in_ds = None
-        out_ds = None
-
-        # Create zip file containing all shapefile components
-        with zipfile.ZipFile(output_zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            # Find all files matching the shapefile base name
-            for ext in ['.shp', '.shx', '.dbf', '.prj']:
-                filename = os.path.splitext(temp_shp)[0] + ext
-                if os.path.exists(filename):
-                    # Add file to zip with just the basename
-                    zipf.write(filename, os.path.basename(filename))
 
 def make_swisstopo_request(
     swiss_polygon: 'Polygon', filetype: str = "buildings"
@@ -200,10 +134,16 @@ def download_tile(url, folder):
             print(f"unzipping {file_name} and converting to a Shapefile")
             zip_ref.extractall(folder)
 
-            convert_dxf_to_zipped_shapefile(
-                input_dxf_path=f"{folder}/{dxf_file}",
-                output_zip_path=shp_zip_path
-            )
+            print("Running ogr2ogr")
+            # Convert DXF to Shapefile
+            command = [
+                "ogr2ogr",
+                "-f",
+                "ESRI Shapefile",
+                shp_zip_path,
+                f"{folder}/{dxf_file}",
+            ]
+            subprocess.call(command)            
 
             # remove dxf_file
             os.remove(f"{folder}/{dxf_file}")
@@ -385,6 +325,7 @@ def download_data(polygon, filetype="buildings", save_dir = DOWNLOADS_DIR):
         else:
             all_downloads_successful = True
 
+        os.makedirs(f"{save_dir}/{filetype}", exist_ok=True)
         with open(f"{save_dir}/{filetype}/files.txt", "w") as txtfile:
             for item in result["items"]:
                 filename = download_tile(
