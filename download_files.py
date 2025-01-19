@@ -88,6 +88,7 @@ def download_tile(url, folder):
     try:
         file_name = os.path.join(folder, url.split("/")[-1])
 
+        # make sure that the folders in folder exist and create them if necessary. AI!
         if not os.path.exists(file_name):
             print(f"Download  {url}")
             # Add no-cache headers
