@@ -15,7 +15,7 @@ import streamlit.components.v1 as components
 from streamlit_folium import st_folium
 
 from streamlit_3d import threed_from_file
-import utilities
+
 
 from pathlib import Path
 import tempfile
