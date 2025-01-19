@@ -9,3 +9,9 @@ wheels/
 # Virtual environments
 .venv
 .aider*
+.env
+buildings.*
+downloads
+.DS_Store
+.python-version
+
