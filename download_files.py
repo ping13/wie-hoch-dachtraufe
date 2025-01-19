@@ -154,10 +154,8 @@ def make_swisstopo_request(
 def download_tile(url, folder):
     try:
         file_name = os.path.join(folder, url.split("/")[-1])
-        
-        # Ensure folder exists
-        os.makedirs(os.path.dirname(file_name), exist_ok=True)
-        
+
+        # make sure that the folders in folder exist and create them if necessary. AI!
         if not os.path.exists(file_name):
             print(f"Download  {url}")
             # Add no-cache headers
@@ -386,8 +384,6 @@ def download_data(polygon, filetype="buildings", save_dir = DOWNLOADS_DIR):
             all_downloads_successful = False
         else:
             all_downloads_successful = True
-
-        os.makedirs(f"{save_dir}/{filetype}", exist_ok=True)
 
         with open(f"{save_dir}/{filetype}/files.txt", "w") as txtfile:
             for item in result["items"]:
