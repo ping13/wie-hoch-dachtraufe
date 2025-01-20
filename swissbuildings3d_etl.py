@@ -166,12 +166,12 @@ def process_buildings_from_zips(
     # Create progress bar
     progress_bar = st.progress(0)
     
+    # Get total features count using len()
     with fiona.open(shp_zip, "r") as src:
         total_features = len(src)
-        
-        # Reset file pointer to beginning
-        src.reset()
-        
+    
+    # Process features in a separate open operation
+    with fiona.open(shp_zip, "r") as src:
         for idx, feature in enumerate(src):
             # Update progress
             progress = (idx + 1) / total_features

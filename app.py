@@ -6,7 +6,7 @@ from pyproj import Transformer
 from shapely.geometry import Polygon, box,MultiPolygon
 import pyvista as pv
 
-from download_files import download_data, process_buildings_from_zips
+from swissbuildings3d_etl import download_data, process_buildings_from_zips
 import folium
 from folium.plugins import Draw
 
@@ -16,9 +16,10 @@ from streamlit_folium import st_folium
 
 from streamlit_3d import threed_from_file
 
-
 from pathlib import Path
 import tempfile
+
+MAX_AREA=50000
 
 # Set page configuration
 st.set_page_config(
@@ -26,6 +27,8 @@ st.set_page_config(
     layout="centered"              
 )
 
+st.title('Wie hoch ist die Dachtraufe?')
+st.markdown(f'Wählen Sie ein Gebiet aus (kleiner als {MAX_AREA:,}m²), um die [Traufenhöhen der Gebäude](https://de.wikipedia.org/wiki/Dachtraufe) zu analysieren.')
 
 def create_map(center, zoom):
     """Erstellt eine interaktive Karte mit Zeichentools.
@@ -82,7 +85,6 @@ if st.button("Berechne"):
         swiss_polygon = Polygon(swiss_coords)
 
         # Check area size
-        MAX_AREA=50000
         area = swiss_polygon.area
         if area > MAX_AREA:
             st.error(f"Die ausgewählte Fläche ist zu gross ({area:.0f} m²). Bitte wählen Sie eine Fläche kleiner als {MAX_AREA} m².")
