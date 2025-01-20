@@ -116,6 +116,10 @@ if st.button("Berechne"):
                         'min_height': np.min(mesh.points[:, 2])
                     }
 
+        if len(all_meshes) == 0:
+            st.error(f"Keine Gebäude gefunden, zeichne eine grössere Fläche.")
+            st.stop()
+
         # Display building heights table
         st.write("Traufenhöhen der Gebäude:")
         st.dataframe(
@@ -132,7 +136,7 @@ if st.button("Berechne"):
         # Show 3D object
         output_file = "buildings.ply"            
         # Combine all meshes
-        combined = meshes[0].copy()
+        combined = all_meshes[0].copy()
         for mesh in all_meshes[1:]:
             combined = combined.merge(mesh)
             

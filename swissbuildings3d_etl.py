@@ -175,7 +175,7 @@ def process_buildings_from_zips(
         for idx, feature in enumerate(src):
             # Update progress
             progress = (idx + 1) / total_features
-            progress_bar.progress(progress, f"Processing building {idx + 1} of {total_features}")
+            progress_bar.progress(progress, f"Analyzing building {idx + 1} of {total_features} from the data tile")
 
             properties = feature["properties"]
             feature_layer_type = properties.get("Layer", "n/a")
