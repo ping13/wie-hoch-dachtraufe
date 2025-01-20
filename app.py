@@ -1,4 +1,5 @@
 import os
+import subprocess
 import plotly.express as px
 import numpy as np
 import pandas as pd
@@ -164,19 +165,34 @@ if st.button(_("Calculate")):
 
         traufen.to_csv('buildings_attributes.csv',index=False)
         
-        # convert the two ogr2ogr commands into subprocess commands. AI!
-"""
-ogr2ogr -f "ESRI Shapefile" output.shp.zip downloads/buildings/SWISSBUILDINGS3D_2_0_CHLV95LN02_1132-11_2D.shp.zip \
-  -sql "SELECT * FROM entities JOIN 'buildings_attributes.csv'.buildings_attributes 
-        ON entities.EntityHand = buildings_attributes.EntityHand"
+        # Execute ogr2ogr commands to process the data
+        try:
+            # First ogr2ogr command - Create shapefile
+            subprocess.run([
+                'ogr2ogr',
+                '-f', 'ESRI Shapefile',
+                'output.shp.zip',
+                'downloads/buildings/SWISSBUILDINGS3D_2_0_CHLV95LN02_1132-11_2D.shp.zip',
+                '-sql',
+                "SELECT * FROM entities JOIN 'buildings_attributes.csv'.buildings_attributes ON entities.EntityHand = buildings_attributes.EntityHand"
+            ], check=True)
 
-ogr2ogr -f "KML" filtered.kml output.shp.zip \
-  -t_srs "EPSG:4326" -s_srs "EPSG:2056" \
-  -sql "SELECT * FROM entities WHERE min_height IS NOT NULL" \
-  -dsco NameField=EntityHand \
-  -dsco DescriptionField=descr
-"""
-        
+            # Second ogr2ogr command - Convert to KML
+            subprocess.run([
+                'ogr2ogr',
+                '-f', 'KML',
+                'filtered.kml',
+                'output.shp.zip',
+                '-t_srs', 'EPSG:4326',
+                '-s_srs', 'EPSG:2056',
+                '-sql', 'SELECT * FROM entities WHERE min_height IS NOT NULL',
+                '-dsco', 'NameField=EntityHand',
+                '-dsco', 'DescriptionField=descr'
+            ], check=True)
+        except subprocess.CalledProcessError as e:
+            st.error(_("Error processing geographic data: ") + str(e))
+            st.stop()
+
         # Display building heights table
         st.write(_("Eaves and ridge heights of selected buildings:"))
         st.dataframe(
