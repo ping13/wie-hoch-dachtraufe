@@ -163,19 +163,19 @@ def process_buildings_from_zips(
     logger.info(f"Processing {shp_zip}")
     skip_count = 0
     
-    # First count total features for progress bar
-    with fiona.open(shp_zip, "r") as src:
-        total_features = len(src)
-        
     # Create progress bar
     progress_bar = st.progress(0)
     
     with fiona.open(shp_zip, "r") as src:
+        total_features = len(src)
+        
+        # Reset file pointer to beginning
+        src.reset()
+        
         for idx, feature in enumerate(src):
             # Update progress
             progress = (idx + 1) / total_features
             progress_bar.progress(progress, f"Processing building {idx + 1} of {total_features}")
-        for feature in src:
 
             properties = feature["properties"]
             feature_layer_type = properties.get("Layer", "n/a")
