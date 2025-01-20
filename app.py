@@ -148,15 +148,17 @@ if st.button(_("Calculate")):
                     z_coords = mesh.points[:, 2]
                     min_height = None
                     max_height = None
+                    descr = "First und Höhe nicht verfügbar"
                     if z_coords.any():
                         min_height = np.min(mesh.points[:, 2])
                         max_height = np.max(mesh.points[:, 2])
+                        descr = f"<b>Traufe:<b> {min_height:.1f}<br/><b>First:</b> {max_height:.1f}"
                     traufen.loc[len(traufen)] = {
                         'EntityHand': mesh.user_dict["id"],
                         'layer': mesh.user_dict["layer"],
                         'min_height': min_height,
                         'max_height': max_height,
-                        'descr': f"<b>Traufe:<b> {min_height:.1f}<br/><b>First:</b> {max_height:.1f}"
+                        'descr': descr 
                     }
                     
         if len(all_meshes) == 0:
@@ -172,7 +174,7 @@ if st.button(_("Calculate")):
                 'ogr2ogr',
                 '-f', 'ESRI Shapefile',
                 'output.shp.zip',
-                'downloads/buildings/SWISSBUILDINGS3D_2_0_CHLV95LN02_1132-11_2D.shp.zip',
+                filename_2d,
                 '-sql',
                 "SELECT * FROM entities JOIN 'buildings_attributes.csv'.buildings_attributes ON entities.EntityHand = buildings_attributes.EntityHand"
             ], check=True)
@@ -181,7 +183,7 @@ if st.button(_("Calculate")):
             subprocess.run([
                 'ogr2ogr',
                 '-f', 'KML',
-                'filtered.kml',
+                'buildings.kml',
                 'output.shp.zip',
                 '-t_srs', 'EPSG:4326',
                 '-s_srs', 'EPSG:2056',
@@ -193,23 +195,7 @@ if st.button(_("Calculate")):
             st.error(_("Error processing geographic data: ") + str(e))
             st.stop()
 
-        # Display building heights table
-        st.write(_("Eaves and ridge heights of selected buildings:"))
-        st.dataframe(
-            traufen.sort_values('min_height'),
-            column_config={
-                "EntitiyHand": _("Buildings ID"),
-                "layer": _("Typ"),
-                "min_height": st.column_config.NumberColumn(
-                    _("Eaves Height (m)"),
-                    format="%.1f"
-                ),
-                "max_height": st.column_config.NumberColumn(
-                    _("Ridge Height (m)"),
-                    format="%.2f"
-                )
-            }
-        )
+        # Replace in the KML file buildings.kml the text '<fill>0</fill>' with '<fill>1</fill><color>7f0000ff</color>'. AI!
 
         # Show 3D object
         output_file = "buildings.ply"            
