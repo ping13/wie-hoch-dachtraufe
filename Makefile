@@ -18,3 +18,8 @@ aider:		## Start a chat with an LLM to change your code
 	uvx -p 3.12 --from aider-chat aider --architect --watch-files
 
 
+i18n_extract:	# extract messages from the source code for i18n
+	uv run pybabel extract -F babel.cfg -o locale/messages.pot .
+
+i18n_compile:
+	uv run pybabel compile -d locale

@@ -1,0 +1,83 @@
+# Translations template for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-01-20 15:06+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
+
+#: app.py:35 app.py:59
+msgid "How high is the eaves height?"
+msgstr ""
+
+#: app.py:60
+msgid ""
+"Select an area (smaller than {max_area:,}m²) to analyze the [eaves "
+"heights of buildings](https://en.wikipedia.org/wiki/Eaves)."
+msgstr ""
+
+#: app.py:108
+msgid "Calculate"
+msgstr ""
+
+#: app.py:120
+msgid ""
+"The selected area is too large ({area:.0f} m²). Please choose an area "
+"smaller than {MAX_AREA} m²."
+msgstr ""
+
+#: app.py:123
+msgid "Downloading {swiss_polygon}"
+msgstr ""
+
+#: app.py:127
+msgid "Keine Daten bei Swisstopo gefunden."
+msgstr ""
+
+#: app.py:130
+msgid "Now processing {','.join(filenames)}"
+msgstr ""
+
+#: app.py:154
+msgid "No buildings found, please draw a larger area."
+msgstr ""
+
+#: app.py:158
+msgid "Eaves height of selected buildings:"
+msgstr ""
+
+#: app.py:162
+msgid "Buildings ID"
+msgstr ""
+
+#: app.py:164
+msgid "Eaves Height (m)"
+msgstr ""
+
+#: app.py:183
+msgid "Failed to generate 3D model file"
+msgstr ""
+
+#: app.py:191
+msgid "Point height (m)"
+msgstr ""
+
+#: app.py:191 app.py:198
+msgid "Number of points"
+msgstr ""
+
+#: app.py:197
+msgid "Point height(m)"
+msgstr ""
+

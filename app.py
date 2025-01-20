@@ -5,6 +5,7 @@ import pandas as pd
 from pyproj import Transformer
 from shapely.geometry import Polygon, box,MultiPolygon
 import pyvista as pv
+from i18n import _, update_translation
 
 from swissbuildings3d_etl import download_data, process_buildings_from_zips
 import folium
@@ -19,16 +20,46 @@ from streamlit_3d import threed_from_file
 from pathlib import Path
 import tempfile
 
-MAX_AREA=50000
+MAX_AREA=100000
+
+# Language selector in sidebar
+languages = {
+    'Deutsch': 'de',
+    'Français': 'fr',
+    'Italiano': 'it',
+    'English': 'en'
+}
 
 # Set page configuration
 st.set_page_config(
-    page_title='Wie hoch ist die Dachtraufe?',
+    page_title=_('How high is the eaves height?'),
     layout="centered"              
 )
 
-st.title('Wie hoch ist die Dachtraufe?')
-st.markdown(f'Wählen Sie ein Gebiet aus (kleiner als {MAX_AREA:,}m²), um die [Traufenhöhen der Gebäude](https://de.wikipedia.org/wiki/Dachtraufe) zu analysieren.')
+# Initialize language on first load
+if 'language' not in st.session_state:
+    st.session_state['language'] = 'de'
+    st.session_state['language_name'] = 'Deutsch'
+
+# Language selector
+selected_language = st.sidebar.selectbox(
+    "Select Language",
+    options=list(languages.keys()),
+    index=list(languages.keys()).index(next(name for name, code in languages.items() 
+                                          if code == st.session_state['language'])),
+    key="language_selector"
+)
+
+# Update language if changed
+new_language_code = languages[selected_language]
+if st.session_state.get('language') != new_language_code:
+    st.session_state['language'] = new_language_code
+    st.session_state['language_name'] = selected_language
+    update_translation()
+    st.rerun()
+
+st.title(_('How high is the eaves height?'))
+st.markdown(_('Select an area (smaller than {max_area:,}m²) to analyze the [eaves heights of buildings](https://en.wikipedia.org/wiki/Eaves).').format(max_area=MAX_AREA))
 
 def create_map(center, zoom):
     """Erstellt eine interaktive Karte mit Zeichentools.
@@ -72,10 +103,11 @@ def create_map(center, zoom):
 
 # Create the map and display it in the placeholder
 m = create_map(center=[46.8182, 8.2275], zoom=8)  # Centered on Switzerland
-output = st_folium(m, width=700)
+output = st_folium(m, width=800, height=400)
 transformer = Transformer.from_crs("EPSG:4326", "EPSG:2056", always_xy=True)
 
-if st.button("Berechne"):
+# Render the calc button 
+if st.button(_("Calculate")):
     if output["last_active_drawing"]:
         drawn_polygon = output["last_active_drawing"]["geometry"]["coordinates"][0]
         polygon = Polygon(drawn_polygon)
@@ -87,17 +119,17 @@ if st.button("Berechne"):
         # Check area size
         area = swiss_polygon.area
         if area > MAX_AREA:
-            st.error(f"Die ausgewählte Fläche ist zu gross ({area:.0f} m²). Bitte wählen Sie eine Fläche kleiner als {MAX_AREA} m².")
+            st.error(_("The selected area is too large ({area:.0f} m²). Please choose an area smaller than {MAX_AREA} m²."))
             st.stop()
             
-        print(f"Downloading {swiss_polygon}")
+        print(_("Downloading {swiss_polygon}"))
         filenames = download_data(swiss_polygon, "buildings")
 
         if len(filenames) == 0:
-            st.error(f"Keine Daten bei Swisstopo gefunden.")
+            st.error(_("Keine Daten bei Swisstopo gefunden."))
             st.stop()
 
-        print(f"Now processing {','.join(filenames)}")
+        print(_("Now processing {','.join(filenames)}"))
         # Create a combined mesh for all buildings
         combined_mesh = pv.PolyData()
 
@@ -111,23 +143,27 @@ if st.button("Berechne"):
                 for mesh in meshes:
                     all_meshes.append(mesh)
                     # add the "traufenhoehe"
+                    z_coords = mesh.points[:, 2]
+                    min_height = None
+                    if z_coords.any():
+                        min_height = np.min(mesh.points[:, 2])                        
                     traufen.loc[len(traufen)] = {
                         'name': mesh.user_dict["id"],
-                        'min_height': np.min(mesh.points[:, 2])
+                        'min_height': min_height
                     }
 
         if len(all_meshes) == 0:
-            st.error(f"Keine Gebäude gefunden, zeichne eine grössere Fläche.")
+            st.error(_("No buildings found, please draw a larger area."))
             st.stop()
 
         # Display building heights table
-        st.write("Traufenhöhen der Gebäude:")
+        st.write(_("Eaves height of selected buildings:"))
         st.dataframe(
             traufen.sort_values('min_height'),
             column_config={
-                "name": "Gebäude ID",
+                "name": _("Buildings ID"),
                 "min_height": st.column_config.NumberColumn(
-                    "Traufenhöhe (m)",
+                    _("Eaves Height (m)"),
                     format="%.1f"
                 )
             }
@@ -146,22 +182,22 @@ if st.button("Berechne"):
                              suffix=".ply",
                              key='your roofs')                
         else:
-            st.error("Failed to generate 3D model file")
+            st.error(_("Failed to generate 3D model file"))
 
         # Create histogram of building heights
         z_coords = combined.points[:, 2]  # Get all z-coordinates
 
         fig = px.histogram(
             z_coords, 
-            title='Verteilung der z-Koordinatenwerte',
-            labels={'value': 'Höhe (m)', 'count': 'Anzahl'},
+            title=_('Verteilung der z-Koordinatenwerte'),
+            labels={'value': _('Point height (m)'), 'count': _('Number of points')},
             nbins=50,
             orientation='h'  # This switches to horizontal orientation
         )
         fig.update_layout(
             showlegend=False,
-            yaxis_title='Höhe (m)',  # Switched from x to y
-            xaxis_title='Anzahl'     # Switched from y to x
+            yaxis_title=_('Point height(m)'),  # Switched from x to y
+            xaxis_title=_('Number of points')     # Switched from y to x
         )
         st.plotly_chart(fig)
 
