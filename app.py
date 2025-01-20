@@ -59,8 +59,8 @@ if st.session_state.get('language') != new_language_code:
     update_translation()
     st.rerun()
 
-st.title(_('How high is the eaves height?'))
-st.markdown(_('Select an area (smaller than {max_area:,}m²) to analyze the [eaves heights of buildings](https://en.wikipedia.org/wiki/Eaves).').format(max_area=MAX_AREA))
+st.title(_('How high is the eaves and ridge height of a roof?'))
+st.markdown(_('Select an area (smaller than {max_area:,}m²) to analyze the [ridge eaves heights of building roofs](https://en.wikipedia.org/wiki/Eaves).').format(max_area=MAX_AREA))
 
 def create_map(center, zoom):
     """Erstellt eine interaktive Karte mit Zeichentools.
@@ -124,20 +124,20 @@ if st.button(_("Calculate")):
             st.stop()
             
         print(_("Downloading {swiss_polygon}"))
-        filenames = download_data(swiss_polygon, "buildings")
+        filenames_tuples = download_data(swiss_polygon, "buildings")
 
-        if len(filenames) == 0:
+        if len(filenames_tuples) == 0:
             st.error(_("Keine Daten bei Swisstopo gefunden."))
             st.stop()
 
-        print(_("Now processing {','.join(filenames)}"))
+        print(_("Now processing {','.join(filenames_tuples)}"))
         # Create a combined mesh for all buildings
         combined_mesh = pv.PolyData()
 
         # Create DataFrame to store building information
-        traufen = pd.DataFrame(columns=['name', 'min_height'])
+        traufen = pd.DataFrame(columns=['EntityHand', 'min_height', 'max_height', 'layer','descr'])
         all_meshes = [ ]
-        for filename in filenames:
+        for filename, filename_2d in filenames_tuples:
             result = process_buildings_from_zips(filename, swiss_polygon)
 
             for layer_type, meshes in result.items():
@@ -146,26 +146,51 @@ if st.button(_("Calculate")):
                     # add the "traufenhoehe"
                     z_coords = mesh.points[:, 2]
                     min_height = None
+                    max_height = None
                     if z_coords.any():
-                        min_height = np.min(mesh.points[:, 2])                        
+                        min_height = np.min(mesh.points[:, 2])
+                        max_height = np.max(mesh.points[:, 2])
                     traufen.loc[len(traufen)] = {
-                        'name': mesh.user_dict["id"],
-                        'min_height': min_height
+                        'EntityHand': mesh.user_dict["id"],
+                        'layer': mesh.user_dict["layer"],
+                        'min_height': min_height,
+                        'max_height': max_height,
+                        'descr': f"<b>Traufe:<b> {min_height:.1f}<br/><b>First:</b> {max_height:.1f}"
                     }
-
+                    
         if len(all_meshes) == 0:
             st.error(_("No buildings found, please draw a larger area."))
             st.stop()
 
+        traufen.to_csv('buildings_attributes.csv',index=False)
+        
+        # convert the two ogr2ogr commands into subprocess commands. AI!
+"""
+ogr2ogr -f "ESRI Shapefile" output.shp.zip downloads/buildings/SWISSBUILDINGS3D_2_0_CHLV95LN02_1132-11_2D.shp.zip \
+  -sql "SELECT * FROM entities JOIN 'buildings_attributes.csv'.buildings_attributes 
+        ON entities.EntityHand = buildings_attributes.EntityHand"
+
+ogr2ogr -f "KML" filtered.kml output.shp.zip \
+  -t_srs "EPSG:4326" -s_srs "EPSG:2056" \
+  -sql "SELECT * FROM entities WHERE min_height IS NOT NULL" \
+  -dsco NameField=EntityHand \
+  -dsco DescriptionField=descr
+"""
+        
         # Display building heights table
-        st.write(_("Eaves height of selected buildings:"))
+        st.write(_("Eaves and ridge heights of selected buildings:"))
         st.dataframe(
             traufen.sort_values('min_height'),
             column_config={
-                "name": _("Buildings ID"),
+                "EntitiyHand": _("Buildings ID"),
+                "layer": _("Typ"),
                 "min_height": st.column_config.NumberColumn(
                     _("Eaves Height (m)"),
                     format="%.1f"
+                ),
+                "max_height": st.column_config.NumberColumn(
+                    _("Ridge Height (m)"),
+                    format="%.2f"
                 )
             }
         )
@@ -190,7 +215,7 @@ if st.button(_("Calculate")):
 
         fig = px.histogram(
             z_coords, 
-            title=_('Verteilung der z-Koordinatenwerte'),
+            title=_('Distribution of z-coordinate values'),
             labels={'value': _('Point height (m)'), 'count': _('Number of points')},
             nbins=50,
             orientation='h'  # This switches to horizontal orientation
