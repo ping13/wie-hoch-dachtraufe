@@ -16,6 +16,7 @@ import streamlit.components.v1 as components
 from streamlit_folium import st_folium
 
 from streamlit_3d import threed_from_file
+import utilities
 
 from pathlib import Path
 import tempfile
@@ -202,3 +203,12 @@ if st.button(_("Calculate")):
         st.plotly_chart(fig)
 
         print("done")
+
+gh_release, gh_date = "--", "--" 
+try:
+    gh_release,gh_date=utilities.get_latest_release_date("https://github.com/ping13/wie-hoch-dachtraufe")
+except:
+    pass 
+st.markdown("---")
+st.markdown(f"© 2025 [Stephan Heuel](https://blog.heuel.org/pages/contact), App Version: {gh_release}, {gh_date}")
+st.markdown(_("Based on [Wo sind Briefkästen](https://wieviele-briefkaesten-gibt-es.streamlit.app)"))
