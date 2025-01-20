@@ -159,11 +159,22 @@ def process_buildings_from_zips(
     building_counter = 0  # Initialize counter for unique IDs
     layer_lut: Dict[str, int] = {}  # Track counts of each layer type
 
-
     shp_zip = input_path
     logger.info(f"Processing {shp_zip}")
     skip_count = 0
+    
+    # First count total features for progress bar
     with fiona.open(shp_zip, "r") as src:
+        total_features = len(src)
+        
+    # Create progress bar
+    progress_bar = st.progress(0)
+    
+    with fiona.open(shp_zip, "r") as src:
+        for idx, feature in enumerate(src):
+            # Update progress
+            progress = (idx + 1) / total_features
+            progress_bar.progress(progress, f"Processing building {idx + 1} of {total_features}")
         for feature in src:
 
             properties = feature["properties"]
@@ -310,6 +321,9 @@ def process_buildings_from_zips(
     # Log counts for each layer type
     for layer_type, meshes in layer_lut.items():
         logger.info(f"Layer {layer_type}: {len(meshes)} buildings")
+    
+    # Clear progress bar
+    progress_bar.empty()
     
     return layer_lut
 
