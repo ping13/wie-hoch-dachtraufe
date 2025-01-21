@@ -125,12 +125,6 @@ def download_tile(url, folder):
             f_shpzip = dxf_file.replace(".dxf", ".shp.zip")
             shp_zip_path = f"{folder}/{f_shpzip}"
 
-            # Check if shapefile zip exists and is newer than the dxf file
-            if os.path.exists(shp_zip_path) and os.path.getmtime(
-                shp_zip_path
-            ) > os.path.getmtime(file_name):
-                return shp_zip_path
-
             print(f"unzipping {file_name} and converting to a Shapefile")
             zip_ref.extractall(folder)
 
@@ -148,8 +142,22 @@ def download_tile(url, folder):
             # remove dxf_file
             os.remove(f"{folder}/{dxf_file}")
 
+        # create a dissolved 2D shapefile: first create a 2D shapefile from the MultiPatch file
+        tmpshz_path = "converted_2d.shp.zip"
+        command = ["ogr2ogr", "-f", "ESRI Shapefile", tmpshz_path, shp_zip_path, "-skipfailures", "-dim", "2", "-nlt", "MULTIPOLYGON"]
+        subprocess.call(command)
+            
+        # now dissolve according to entityhand
+        f2d_shpzip = shp_zip_path.replace(".shp.zip", "_2D.shp.zip")
+        command = ["ogr2ogr", "-f", "ESRI Shapefile", f2d_shpzip, tmpshz_path, "-dialect", "sqlite", "-sql", "SELECT ST_Union(geometry) as geometry, EntityHand FROM entities GROUP BY EntityHand", "-nln", "entities"]
+        subprocess.call(command)
+
+        # remove temp shapefile
+        os.remove(tmpshz_path)
+
+        
         # return zipped Shapefile
-        return shp_zip_path
+        return shp_zip_path, f2d_shpzip
 
 
 def process_buildings_from_zips(
@@ -342,13 +350,13 @@ def download_data(polygon, filetype="buildings", save_dir = DOWNLOADS_DIR):
         os.makedirs(f"{save_dir}/{filetype}", exist_ok=True)
         with open(f"{save_dir}/{filetype}/files.txt", "w") as txtfile:
             for item in result["items"]:
-                filename = download_tile(
+                filename, filename_2d = download_tile(
                     item["ass_asset_href"], f"{save_dir}{filetype}"
                 )
                 if not filename:
                     all_downloads_successful = False
                 txtfile.write(f"{filename}\n")
-                filenames.append(filename)
+                filenames.append( (filename, filename_2d) )
         if not all_downloads_successful:
             print("Not all downloads have been successful!")
             return filenames
