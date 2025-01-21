@@ -20,7 +20,7 @@ import streamlit as st
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# log GDAL version AI!
+# log GDAL version using subprocess AI!
 
 # Constants
 DOWNLOADS_DIR = "downloads/"
