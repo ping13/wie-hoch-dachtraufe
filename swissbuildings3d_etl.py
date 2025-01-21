@@ -20,7 +20,12 @@ import streamlit as st
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# log GDAL version using subprocess AI!
+# Log GDAL version
+try:
+    gdal_version = subprocess.check_output(['gdalinfo', '--version'], text=True).strip()
+    logger.info(f"GDAL version: {gdal_version}")
+except subprocess.CalledProcessError as e:
+    logger.warning(f"Could not determine GDAL version: {e}")
 
 # Constants
 DOWNLOADS_DIR = "downloads/"
