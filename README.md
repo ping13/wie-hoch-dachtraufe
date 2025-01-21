@@ -12,9 +12,9 @@ A Streamlit web application that analyzes and visualizes the heights of building
 
 ## Requirements
 
-- Python 3.8+
-- GDAL
-- Various Python packages (see requirements.txt)
+- Python (tested with 3.12)
+- GDAL (fairly recent, [3.2 doesn't work](https://github.com/ping13/wie-hoch-dachtraufe/issues/1))
+- Various Python packages (see `pyproject.toml`)
 
 ## Installation
 
