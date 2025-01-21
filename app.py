@@ -40,7 +40,7 @@ except:
 def render_content():
     """Render all content"""
     # Title and description
-    st.title('How high is the eaves and ridge height of a roof?')
+    st.title("How high are the eaves and ridge height of building roofs?")
     st.markdown(f'Select an area (smaller than {MAX_AREA:,}m²) to analyze the [ridge eaves heights of building roofs](https://en.wikipedia.org/wiki/Eaves).')
     
     # Create the map and display it
