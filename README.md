@@ -24,6 +24,8 @@ git clone https://github.com/ping13/wie-hoch-dachtraufe.git
 cd wie-hoch-dachtraufe
 ```
 
+Make sure you have [`uv`](https://github.com/astral-sh/uv) installed.
+
 ## Usage
 
 1. Run the Streamlit app:
@@ -32,9 +34,10 @@ make devserver
 ```
 
 2. Select an area on the map (must be less than 100,000 m²)
-3. Click "Calculate" to analyze the building heights
+3. Click "Calculate" to analyze the roof heights
 4. View the 3D model and height distribution
-5. Download the KML file for Google Earth visualization
+5. Download the KML file for and drag it onto https://map.geo.admin.ch/ to
+   click on roof components and get the individual roof heights
 
 ## Data Sources
 
